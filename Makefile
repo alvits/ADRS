@@ -5,7 +5,7 @@ UNAME:=$(shell uname)
 XENVERSION:=$(shell rpm -q --qf "%{version}" xen-devel | cut -c1)
 CFLAGS:=-fpic -O2 -Wall -Wextra -D_XOPEN_SOURCE=700 -D__USE_POSIX=2000 -D$(UNAME) -DXENVERSION=$(XENVERSION) -DMTAB=\"/proc/self/mounts\" -DTWO_WAY -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/linux $(DEBUG) $(GCOV)
 ADRS:=libADRS.so
-LIBPROC:=$(shell rpm -q procps-ng > /dev/null 2>&1 && echo procps; rpm -q procps > /dev/null 2>&1 && echo proc)
+LIBPROC:=$(shell (rpm -q procps-ng > /dev/null 2>&1 && echo procps) || (rpm -q procps > /dev/null 2>&1 && echo proc))
 LDFLAGS:=-Wall -Wextra -lpthread -pthread -l$(LIBPROC) -lxenlight -shared -e project $(GCOV)
 TEMPFILE:=$(shell mktemp -u /tmp/XXXXXXXXXX)
 TESTOUT:=$(TEMPFILE)
