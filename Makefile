@@ -14,7 +14,7 @@ endif
 
 CC:=gcc
 UNAME:=$(shell uname)
-XENVERSION:=$(shell rpm -q --qf "%{version}" xen-devel | cut -c1)
+XENVERSION:=$(shell rpm --quiet -q xen-devel && rpm -q --qf "%{version}" xen-devel | cut -c1)
 CFLAGS:=-fpic -O2 -Wall -Wextra -D_XOPEN_SOURCE=700 -D__USE_POSIX=2000 -D$(UNAME) -DXENVERSION=$(XENVERSION) -DMTAB=\"/proc/self/mounts\" -DTWO_WAY -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/linux $(DEBUG) $(GCOV)
 ADRS:=libADRS.so
 LIBPROC:=$(shell (rpm -q procps-ng-devel > /dev/null 2>&1 && echo procps) || (rpm -q procps-devel > /dev/null 2>&1 && echo proc))
@@ -24,6 +24,10 @@ TESTOUT:=$(TEMPFILE)
 TESTSOURCE:=$(TEMPFILE).c
 INTERP:=$(shell echo -e "int main(int argc, char *argv[]){(void *)0;}" > $(TESTSOURCE); $(CC) $(CCFLAGS) $(TESTSOURCE) -o $(TESTOUT) > /dev/null 2>&1; readelf -l $(TESTOUT)|grep Requesting\ program\ interpreter|sed 's/^[^:]*:[[:blank:]]\([^]]*\).*/\1/g'; rm -f $(TESTSOURCE) $(TESTOUT))
 JNISOURCES:=$(shell grep -l JNIEXPORT *.c)
+
+ifndef XENVERSION
+    $(error xen-devel package is not installed)
+endif
 
 ifndef LIBPROC
     $(error procps development package is not installed)
