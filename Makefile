@@ -1,17 +1,33 @@
 # make with GCOV='-fprofile-arcs -ftest-coverage' to test coverage
-JAVA_HOME:=/usr/java/latest
+
+ifndef JAVA_HOME
+    ifneq ("$(wildcard /usr/java/latest)","")
+        JAVA_HOME:=/usr/java/latest
+    else
+        $(error JAVA_HOME is not set)
+    endif
+else
+    ifeq ("$(wildcard $(JAVA_HOME)/bin/javac)","")
+        $(error jdk is not installed)
+    endif
+endif
+
 CC:=gcc
 UNAME:=$(shell uname)
 XENVERSION:=$(shell rpm -q --qf "%{version}" xen-devel | cut -c1)
 CFLAGS:=-fpic -O2 -Wall -Wextra -D_XOPEN_SOURCE=700 -D__USE_POSIX=2000 -D$(UNAME) -DXENVERSION=$(XENVERSION) -DMTAB=\"/proc/self/mounts\" -DTWO_WAY -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/linux $(DEBUG) $(GCOV)
 ADRS:=libADRS.so
-LIBPROC:=$(shell (rpm -q procps-ng > /dev/null 2>&1 && echo procps) || (rpm -q procps > /dev/null 2>&1 && echo proc))
+LIBPROC:=$(shell (rpm -q procps-ng-devel > /dev/null 2>&1 && echo procps) || (rpm -q procps-devel > /dev/null 2>&1 && echo proc))
 LDFLAGS:=-Wall -Wextra -lpthread -pthread -l$(LIBPROC) -lxenlight -shared -e project $(GCOV)
 TEMPFILE:=$(shell mktemp -u /tmp/XXXXXXXXXX)
 TESTOUT:=$(TEMPFILE)
 TESTSOURCE:=$(TEMPFILE).c
 INTERP:=$(shell echo -e "int main(int argc, char *argv[]){(void *)0;}" > $(TESTSOURCE); $(CC) $(CCFLAGS) $(TESTSOURCE) -o $(TESTOUT) > /dev/null 2>&1; readelf -l $(TESTOUT)|grep Requesting\ program\ interpreter|sed 's/^[^:]*:[[:blank:]]\([^]]*\).*/\1/g'; rm -f $(TESTSOURCE) $(TESTOUT))
 JNISOURCES:=$(shell grep -l JNIEXPORT *.c)
+
+ifndef LIBPROC
+    $(error procps development package is not installed)
+endif
 
 all:	$(ADRS)
 
